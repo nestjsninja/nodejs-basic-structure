@@ -1,13 +1,36 @@
-import fastify from "fastify";
-import { PrismaClient } from '@prisma/client'
+import fastifyJwt from '@fastify/jwt'
+import fastify from 'fastify'
+import { ZodError } from 'zod'
+import { env } from '@/env'
+import { usersRoutes } from '@/http/controllers/users/routes'
 
-export const app = fastify();
+export const app = fastify()
 
-const prisma = new PrismaClient()
-
-prisma.user.create({
-    data: {
-        name: 'henrique weiand',
-        email: 'henriqueweiand@gmail.com',
+app.register(fastifyJwt, {
+    secret: env.JWT_SECRET,
+    cookie: {
+        cookieName: 'refreshToken',
+        signed: false,
     },
+    sign: {
+        expiresIn: '10m',
+    },
+})
+
+app.register(usersRoutes)
+
+app.setErrorHandler((error, _, reply) => {
+    if (error instanceof ZodError) {
+        return reply
+            .status(400)
+            .send({ message: 'Validation error.', issues: error.format() })
+    }
+
+    if (env.NODE_ENV !== 'production') {
+        console.error(error)
+    } else {
+        // TODO: Here we should log to a external tool like DataDog/NewRelic/Sentry
+    }
+
+    return reply.status(500).send({ message: 'Internal server error.' })
 })
