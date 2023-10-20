@@ -8,9 +8,22 @@ datasource db {
 }
 
 model User {
-    id    String @id @default(uuid())
-    name  String
-    email String @unique
+    id            String   @id @default(uuid())
+    name          String
+    email         String   @unique
+    password_hash String
+    created_at    DateTime @default(now())
 
     @@map("users")
+}
+
+model Address {
+    id             String  @id @default(uuid())
+    title          String?
+    street_address String
+    city           String
+    postal_code    String
+    country        String
+
+    @@map("address")
 }
